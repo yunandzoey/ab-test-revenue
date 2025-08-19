@@ -1,0 +1,21 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: true }
+      - run: |
+          test -d data && test -d analysis && test -d bi && test -d docs
+          grep -q '\*.pbix filter=lfs' .gitattributes
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python - <<'PY'
+          import sys, os
+          ok = all(os.path.exists(p) for p in ["README.md","docs/design.md","docs/data_dictionary.md","requirements.txt"])
+          sys.exit(0 if ok else 1)
+          PY
